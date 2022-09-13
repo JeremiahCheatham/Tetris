@@ -23,6 +23,10 @@ lines = 0
 tick = 0
 delay = 1 / 60 * (53 - 5 * level)
 game_state = "over"
+enable_left = True
+enable_up = True
+enable_down = True
+ebale_right = True
 
 
 O_Tetrimino = [
@@ -100,7 +104,7 @@ def reset_game():
     tick = 0
     delay = 1 / 60 * (53 - 5 * level)
     game_state = "play"
-    clock.schedule_interval(game_update, delay / 4)
+    clock.schedule_interval(game_update, delay)
 
 
 def remove_row(column):
@@ -211,44 +215,65 @@ def shape_move(direction):
     return True
 
 
+def toggle_left():
+    global enable_left
+    enable_left = True
+
+
+def toggle_right():
+    global enable_right
+    enable_right = True
+
+
+def toggle_up():
+    global enable_up
+    enable_up = True
+
+
+def toggle_down():
+    global enable_down
+    enable_down = True
+
+
 def game_update():
-    global next_shape, next_color, shape, color, posx, posy, tick, game_state
-    if keyboard.left:
-        shape_move("left")
-    if keyboard.right:
-        shape_move("right")
-    if keyboard.down or tick > 3:
-        tick = 0
-        if not shape_move("down"):
-            for x in range(len(shape)):
-                for y in range(len(shape[x])):
-                    if shape[x][y]:
-                        board[x + posx][y + posy] = color
-            shape = next_shape
-            reset_pos()
-            color = next_color
-            if check_collide(posx, posy):
-                game_state = "over"
-                clock.unschedule(game_update)
-            next_shape = shapes[randint(0, 6)]
-            next_color = random_color()
-            check_board()
-    else:
-        tick += 1
+    global next_shape, next_color, shape, color, posx, posy, game_state
+    if not shape_move("down"):
+        for x in range(len(shape)):
+            for y in range(len(shape[x])):
+                if shape[x][y]:
+                    board[x + posx][y + posy] = color
+        shape = next_shape
+        reset_pos()
+        color = next_color
+        if check_collide(posx, posy):
+            game_state = "over"
+            clock.unschedule(game_update)
+        next_shape = shapes[randint(0, 6)]
+        next_color = random_color()
+        check_board()
+
 
 
 def on_key_down(key):
-    global shape, color, posx, posy
+    global shape, color, posx, posy, enable_left, enable_right, enable_up, enable_down
     if game_state == "play":
         if key == keys.UP:
+            clock.schedule_unique(toggle_up, delay / 4)
+            enable_up = False
             shape_rotate()
         elif key == keys.RIGHT:
+            clock.schedule_unique(toggle_right, delay / 4)
+            enable_right = False
             shape_move("right")
         elif key == keys.LEFT:
+            clock.schedule_unique(toggle_left, delay / 4)
+            enable_left = False
             shape_move("left")
         elif key == keys.DOWN:
+            clock.schedule_unique(toggle_down, delay / 4)
+            enable_down = False
             clock.unschedule(game_update)
-            clock.schedule_interval(game_update, delay / 4)
+            clock.schedule_interval(game_update, delay)
             shape_move("down")
     else:
         if key == keys.SPACE:
@@ -339,7 +364,30 @@ def draw_board():
 
 
 def update():
-    pass
+    global enable_left, enable_right, enable_up, enable_down
+    if game_state == "play":
+        if keyboard.down:
+            if enable_down:
+                clock.schedule_unique(toggle_down, delay / 4)
+                enable_down = False
+                clock.unschedule(game_update)
+                clock.schedule_interval(game_update, delay)
+                shape_move("down")
+        elif keyboard.up:
+            if enable_up:
+                clock.schedule_unique(toggle_up, delay / 4)
+                enable_up = False
+                shape_rotate()
+        elif keyboard.left:
+            if enable_left:
+                clock.schedule_unique(toggle_left, delay / 4)
+                enable_left = False
+                shape_move("left")
+        elif keyboard.right:
+            if enable_right:
+                clock.schedule_unique(toggle_right, delay / 4)
+                enable_right = False
+                shape_move("right")
 
 
 def draw():

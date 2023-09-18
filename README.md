@@ -16,4 +16,5 @@ Escape - Quits/Closes Game.\
 F - Enables showFPS.
 
 # Ports
-[C - SDL2](C-SDL2)
+[C - SDL2](C-SDL2)\
+[Python - PyGame Zero](Python-PyGame-Zero)
